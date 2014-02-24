@@ -1,90 +1,3 @@
-<?php
-   function ValidateEmail($email)
-   {
-      $pattern = '/^([0-9a-z]([-.\w]*[0-9a-z])*@(([0-9a-z])+([-\w]*[0-9a-z])*\.)+[a-z]{2,6})$/i';
-      return preg_match($pattern, $email);
-   }
-
-   if ($_SERVER['REQUEST_METHOD'] == 'POST')
-   {
-      $mailto = 'info@invirohub.com';
-      $mailfrom = isset($_POST['email']) ? $_POST['email'] : $mailto;
-      $subject = 'Website form';
-      $message = 'Values submitted from web site form:';
-      $success_url = '';
-      $error_url = '';
-      $error = '';
-      $eol = "\n";
-      $max_filesize = isset($_POST['filesize']) ? $_POST['filesize'] * 1024 : 1024000;
-      $boundary = md5(uniqid(time()));
-
-      $header  = 'From: '.$mailfrom.$eol;
-      $header .= 'Reply-To: '.$mailfrom.$eol;
-      $header .= 'MIME-Version: 1.0'.$eol;
-      $header .= 'Content-Type: multipart/mixed; boundary="'.$boundary.'"'.$eol;
-      $header .= 'X-Mailer: PHP v'.phpversion().$eol;
-      if (!ValidateEmail($mailfrom))
-      {
-         $error .= "The specified email address is invalid!\n<br>";
-      }
-
-      if (!empty($error))
-      {
-         $errorcode = file_get_contents($error_url);
-         $replace = "##error##";
-         $errorcode = str_replace($replace, $error, $errorcode);
-         echo $errorcode;
-         exit;
-      }
-
-      $internalfields = array ("submit", "reset", "send", "captcha_code");
-      $message .= $eol;
-      $message .= "IP Address : ";
-      $message .= $_SERVER['REMOTE_ADDR'];
-      $message .= $eol;
-      foreach ($_POST as $key => $value)
-      {
-         if (!in_array(strtolower($key), $internalfields))
-         {
-            if (!is_array($value))
-            {
-               $message .= ucwords(str_replace("_", " ", $key)) . " : " . $value . $eol;
-            }
-            else
-            {
-               $message .= ucwords(str_replace("_", " ", $key)) . " : " . implode(",", $value) . $eol;
-            }
-         }
-      }
-
-      $body  = 'This is a multi-part message in MIME format.'.$eol.$eol;
-      $body .= '--'.$boundary.$eol;
-      $body .= 'Content-Type: text/plain; charset=ISO-8859-1'.$eol;
-      $body .= 'Content-Transfer-Encoding: 8bit'.$eol;
-      $body .= $eol.stripslashes($message).$eol;
-      if (!empty($_FILES))
-      {
-          foreach ($_FILES as $key => $value)
-          {
-             if ($_FILES[$key]['error'] == 0 && $_FILES[$key]['size'] <= $max_filesize)
-             {
-                $body .= '--'.$boundary.$eol;
-                $body .= 'Content-Type: '.$_FILES[$key]['type'].'; name='.$_FILES[$key]['name'].$eol;
-                $body .= 'Content-Transfer-Encoding: base64'.$eol;
-                $body .= 'Content-Disposition: attachment; filename='.$_FILES[$key]['name'].$eol;
-                $body .= $eol.chunk_split(base64_encode(file_get_contents($_FILES[$key]['tmp_name']))).$eol;
-             }
-         }
-      }
-      $body .= '--'.$boundary.'--'.$eol;
-      if ($mailto != '')
-      {
-         mail($mailto, $subject, $body, $header);
-      }
-      header('Location: '.$success_url);
-      exit;
-   }
-?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -1024,7 +937,7 @@ $("a[rel^='PhotoGallery1']").fancybox({});
 <div id="wb_Text9" style="position:absolute;left:706px;top:946px;width:252px;height:22px;text-align:center;z-index:38;">
 <span style="color:#F0FFF0;font-family:Arial;font-size:19px;letter-spacing:0px;"><strong> Services</strong></span></div>
 <div id="wb_Form1" style="position:absolute;left:1018px;top:1237px;width:316px;height:224px;z-index:39;">
-<form name="Subsribe" method="post" action="<?php echo basename(__FILE__); ?>" enctype="multipart/form-data" id="Form1">
+<form name="Subsribe" method="post" action="" enctype="text/plain" id="Form1">
 <textarea name="TextArea1" id="TextArea1" style="position:absolute;left:60px;top:118px;width:222px;height:24px;z-index:0;" rows="0" cols="31"></textarea>
 <div id="wb_Text17" style="position:absolute;left:8px;top:121px;width:43px;height:16px;z-index:1;text-align:left;">
 <span style="color:#F5FFFA;font-family:Arial;font-size:13px;">Name</span><span style="color:#FFFFFF;font-family:Arial;font-size:13px;"> </span></div>
@@ -1169,61 +1082,12 @@ $("a[rel^='PhotoGallery1']").fancybox({});
 <li><span></span><a href="./Index.html" target="_self">Home</a>
 </li>
 <li><span></span><a href="./About_Us.html" target="_self">About&nbsp;Us</a>
-
-<ul>
-<li><span></span><a href="./Leadership.html" target="_self">Leadership</a>
-</li>
-<li><span></span><a href="./Operating_Partners.html" target="_self">Operating&nbsp;Partners</a>
-</li>
-<li><span></span><a href="./BBBEE.html" target="_self">BBBEE</a>
-</li>
-<li><span></span><a href="./Socio-Economic_Development.html" target="_self">Socio-Economic&nbsp;Development</a>
-</li>
-</ul>
 </li>
 <li><span></span><a href="./Services.html" target="_self">Services</a>
-
-<ul>
-<li><span></span><a href="./AMI.html" target="_self">AMI</a>
-</li>
-<li><span></span><a href="./Vending,_Billing_&_Tariff_Management.html" target="_self">Vending,&nbsp;Billing&nbsp;&amp;&nbsp;Tariff&nbsp;Management</a>
-</li>
-<li><span></span><a href="./Profiling,_Report_&_Analysis.html" target="_self">Profiling,&nbsp;Reporting&nbsp;&amp;&nbsp;Analysis</a>
-</li>
-<li><span></span><a href="./Field_Services.html" target="_self">Field&nbsp;Services</a>
-</li>
-<li><span></span><a href="./Consulting_Services.html" target="_self">Consulting&nbsp;Services</a>
-</li>
-</ul>
 </li>
 <li><span></span><a href="./Products.html" target="_self">Products</a>
-
-<ul>
-<li><span></span><a href="./Single_Phase_Meters.html" target="_self">Single&nbsp;Phase&nbsp;Meters</a>
 </li>
-<li><span></span><a href="./Three_Phase_Meters.html" target="_self">Three&nbsp;Phase&nbsp;Meters&nbsp;</a>
-</li>
-<li><span></span><a href="./Concentrator.html" target="_self">Concentrator</a>
-</li>
-<li><span></span><a href="./Appliance_Control_Device.html" target="_self">Appliance&nbsp;Control&nbsp;Device</a>
-</li>
-<li><span></span><a href="./Display_Customer_Interface_Unit_.html" target="_self">Display&nbsp;Customer&nbsp;Interface&nbsp;Unit</a>
-</li>
-<li><span></span><a href="./Circuit_&_Appliance_Monitoring.html" target="_self">Circuit&nbsp;&amp;&nbsp;Appliance&nbsp;Monitoring</a>
-</li>
-<li><span></span><a href="./Water_Pulse_Units.html" target="_self">Water&nbsp;Pulse&nbsp;Units</a>
-</li>
-</ul>
-</li>
-<li><span></span><span>Tools&nbsp;+&nbsp;Resources</span>
-<ul>
-<li><span></span><a href="./Downloads.html" target="_self">Downloads&nbsp;</a>
-</li>
-<li><span></span><span>Become&nbsp;a&nbsp;Distributor/Agent</span></li>
-<li><span></span><a href="./Software.html" target="_self">Software</a>
-</li>
-</ul>
-</li>
+<li><span></span><span>Tools&nbsp;+&nbsp;Resources</span></li>
 <li><span></span><a href="./Contact.html" target="_self">Contact&nbsp;Us</a>
 </li>
 </ul>
