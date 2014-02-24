@@ -1,3 +1,90 @@
+<?php
+   function ValidateEmail($email)
+   {
+      $pattern = '/^([0-9a-z]([-.\w]*[0-9a-z])*@(([0-9a-z])+([-\w]*[0-9a-z])*\.)+[a-z]{2,6})$/i';
+      return preg_match($pattern, $email);
+   }
+
+   if ($_SERVER['REQUEST_METHOD'] == 'POST')
+   {
+      $mailto = 'info@invirohub.com';
+      $mailfrom = isset($_POST['email']) ? $_POST['email'] : $mailto;
+      $subject = 'Website form';
+      $message = 'Values submitted from web site form:';
+      $success_url = '';
+      $error_url = '';
+      $error = '';
+      $eol = "\n";
+      $max_filesize = isset($_POST['filesize']) ? $_POST['filesize'] * 1024 : 1024000;
+      $boundary = md5(uniqid(time()));
+
+      $header  = 'From: '.$mailfrom.$eol;
+      $header .= 'Reply-To: '.$mailfrom.$eol;
+      $header .= 'MIME-Version: 1.0'.$eol;
+      $header .= 'Content-Type: multipart/mixed; boundary="'.$boundary.'"'.$eol;
+      $header .= 'X-Mailer: PHP v'.phpversion().$eol;
+      if (!ValidateEmail($mailfrom))
+      {
+         $error .= "The specified email address is invalid!\n<br>";
+      }
+
+      if (!empty($error))
+      {
+         $errorcode = file_get_contents($error_url);
+         $replace = "##error##";
+         $errorcode = str_replace($replace, $error, $errorcode);
+         echo $errorcode;
+         exit;
+      }
+
+      $internalfields = array ("submit", "reset", "send", "captcha_code");
+      $message .= $eol;
+      $message .= "IP Address : ";
+      $message .= $_SERVER['REMOTE_ADDR'];
+      $message .= $eol;
+      foreach ($_POST as $key => $value)
+      {
+         if (!in_array(strtolower($key), $internalfields))
+         {
+            if (!is_array($value))
+            {
+               $message .= ucwords(str_replace("_", " ", $key)) . " : " . $value . $eol;
+            }
+            else
+            {
+               $message .= ucwords(str_replace("_", " ", $key)) . " : " . implode(",", $value) . $eol;
+            }
+         }
+      }
+
+      $body  = 'This is a multi-part message in MIME format.'.$eol.$eol;
+      $body .= '--'.$boundary.$eol;
+      $body .= 'Content-Type: text/plain; charset=ISO-8859-1'.$eol;
+      $body .= 'Content-Transfer-Encoding: 8bit'.$eol;
+      $body .= $eol.stripslashes($message).$eol;
+      if (!empty($_FILES))
+      {
+          foreach ($_FILES as $key => $value)
+          {
+             if ($_FILES[$key]['error'] == 0 && $_FILES[$key]['size'] <= $max_filesize)
+             {
+                $body .= '--'.$boundary.$eol;
+                $body .= 'Content-Type: '.$_FILES[$key]['type'].'; name='.$_FILES[$key]['name'].$eol;
+                $body .= 'Content-Transfer-Encoding: base64'.$eol;
+                $body .= 'Content-Disposition: attachment; filename='.$_FILES[$key]['name'].$eol;
+                $body .= $eol.chunk_split(base64_encode(file_get_contents($_FILES[$key]['tmp_name']))).$eol;
+             }
+         }
+      }
+      $body .= '--'.$boundary.'--'.$eol;
+      if ($mailto != '')
+      {
+         mail($mailto, $subject, $body, $header);
+      }
+      header('Location: '.$success_url);
+      exit;
+   }
+?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -49,38 +136,6 @@ a:hover
    border-width: 0;
    left: 0;
    top: 0;
-}
-#NavigationBar1 ul.navbar
-{
-   list-style: none;
-   margin: 0;
-   padding: 0;
-}
-#NavigationBar1 ul.navbar li
-{
-   height: 79px;
-   width: 269px;
-   margin: 0px 0px 0px 0px;
-   vertical-align: bottom;
-}
-#NavigationBar1 ul.navbar li a
-{
-   display: block;
-   position: relative;
-}
-#NavigationBar1 ul.navbar li a img
-{
-   position: absolute;
-   z-index: 1;
-   border-width: 0px;
-}
-#NavigationBar1 ul.navbar li span
-{
-   display: block;
-   height: 79px;
-   width: 269px;
-   position: absolute;
-   z-index: 2;
 }
 #wb_Text1 
 {
@@ -199,53 +254,6 @@ a:hover
 {
    text-align: center;
 }
-#Line1
-{
-   color: #70BF44;
-   background-color: #70BF44;
-   border-width: 0px;
-}
-#Line2
-{
-   color: #70BF44;
-   background-color: #70BF44;
-   border-width: 0px;
-}
-#Line3
-{
-   color: #70BF44;
-   background-color: #70BF44;
-   border-width: 0px;
-}
-#SlideShow1 .image
-{
-   border-width: 0;
-   left: 0;
-   top: 0;
-}
-#wb_Text15 
-{
-   background-color: transparent;
-   border: 0px #000000 solid;
-   padding: 0;
-   text-align: left;
-}
-#wb_Text15 div
-{
-   text-align: left;
-   white-space: nowrap;
-}
-#wb_Text21 
-{
-   background-color: transparent;
-   border: 0px #000000 solid;
-   padding: 0;
-   text-align: center;
-}
-#wb_Text21 div
-{
-   text-align: center;
-}
 #wb_Form1
 {
    background-color: transparent;
@@ -288,7 +296,7 @@ a:hover
    -moz-border-radius: 2px;
    -webkit-border-radius: 2px;
    border-radius: 2px;
-   background-color: #6AB644;
+   background-color: #393636;
    color: #FFFFFF;
    font-family: Arial;
    font-weight: bold;
@@ -313,21 +321,6 @@ a:hover
 {
    text-align: left;
 }
-#Image26
-{
-   border: 0px #000000 solid;
-}
-#wb_Text10 
-{
-   background-color: transparent;
-   border: 0px #000000 solid;
-   padding: 0;
-   text-align: center;
-}
-#wb_Text10 div
-{
-   text-align: center;
-}
 #PhotoGallery1
 {
    border-spacing: 3px;
@@ -341,30 +334,7 @@ a:hover
 }
 #PhotoGallery1 .figure img
 {
-   border: 0px #000000 solid;
-}
-#Image24
-{
-   border: 0px #000000 solid;
-}
-#Image34
-{
-   border: 0px #000000 solid;
-}
-#Image27
-{
-   border: 0px #000000 solid;
-}
-#wb_Text16 
-{
-   background-color: transparent;
-   border: 0px #000000 solid;
-   padding: 0;
-   text-align: center;
-}
-#wb_Text16 div
-{
-   text-align: center;
+   border-width: 0;
 }
 #wb_Text11 
 {
@@ -398,35 +368,6 @@ a:hover
 #wb_Text13 div
 {
    text-align: center;
-}
-#wb_Text20 
-{
-   background-color: transparent;
-   border: 0px #000000 solid;
-   padding: 0;
-   text-align: center;
-}
-#wb_Text20 div
-{
-   text-align: center;
-}
-#Line4
-{
-   color: #70BF44;
-   background-color: #70BF44;
-   border-width: 0px;
-}
-#Line5
-{
-   color: #70BF44;
-   background-color: #70BF44;
-   border-width: 0px;
-}
-#Line6
-{
-   color: #70BF44;
-   background-color: #70BF44;
-   border-width: 0px;
 }
 #wb_Text19 
 {
@@ -565,10 +506,6 @@ a:hover
    position: absolute;
    z-index: 2;
 }
-#Image15
-{
-   border-width: 0;
-}
 #Line7
 {
    border-width: 0;
@@ -647,28 +584,6 @@ a:hover
    width: 69px;
    position: absolute;
    z-index: 2;
-}
-#wb_Text22 
-{
-   background-color: transparent;
-   border: 0px #000000 solid;
-   padding: 0;
-   text-align: left;
-}
-#wb_Text22 div
-{
-   text-align: left;
-}
-#wb_Text23 
-{
-   background-color: transparent;
-   border: 0px #000000 solid;
-   padding: 0;
-   text-align: center;
-}
-#wb_Text23 div
-{
-   text-align: center;
 }
 #Header
 {
@@ -799,10 +714,6 @@ div.ThemeMenuBar1MenuSplit
 {
    border: 0px #000000 solid;
 }
-#Layer1
-{
-   background-color: #393636;
-}
 #Footer
 {
    background-color: #70BF44;
@@ -871,6 +782,66 @@ div.ThemeMenuBar1MenuSplit
    height: 8px;
    width: 384px;
 }
+#wb_Text20 
+{
+   background-color: transparent;
+   border: 0px #000000 solid;
+   padding: 0;
+   text-align: center;
+}
+#wb_Text20 div
+{
+   text-align: center;
+}
+#wb_Text22 
+{
+   background-color: transparent;
+   border: 0px #000000 solid;
+   padding: 0;
+   text-align: left;
+}
+#wb_Text22 div
+{
+   text-align: left;
+}
+#wb_Text23 
+{
+   background-color: transparent;
+   border: 0px #000000 solid;
+   padding: 0;
+   text-align: center;
+}
+#wb_Text23 div
+{
+   text-align: center;
+}
+#Line1
+{
+   border-width: 0;
+   height: 8px;
+   width: 298px;
+}
+#Line3
+{
+   border-width: 0;
+   height: 214px;
+   width: 8px;
+}
+#Image15
+{
+   border-width: 0;
+}
+#wb_Text21 
+{
+   background-color: transparent;
+   border: 0px #000000 solid;
+   padding: 0;
+   text-align: center;
+}
+#wb_Text21 div
+{
+   text-align: center;
+}
 </style>
 <script type="text/javascript" src="jquery-1.9.1.min.js"></script>
 <script type="text/javascript" src="jquery.ui.effect.min.js"></script>
@@ -906,21 +877,6 @@ $(document).ready(function()
    $("#SlideShow2_next a").click(function()
    {
       $('#SlideShow2').slideshow('nextimage');
-   });
-   $("#NavigationBar1 .navbar a").hover(function()
-   {
-      $(this).children("span").stop().fadeTo(500, 0);
-   }, function()
-   {
-      $(this).children("span").stop().fadeTo(500, 1);
-   })
-   $("#SlideShow1").slideshow(
-   {
-      interval: 5000,
-      type: 'sequence',
-      effect: 'blocks',
-      direction: '',
-      effectlength: 2000
    });
 $("a[rel^='PhotoGallery1']").fancybox({});
    $("#RollOver1 a").hover(function()
@@ -996,22 +952,20 @@ $("a[rel^='PhotoGallery1']").fancybox({});
 </head>
 <body>
 <div id="container">
-<div id="wb_Shape13" style="position:absolute;left:71px;top:623px;width:268px;height:1317px;z-index:19;">
-<img src="images/img0256.png" id="Shape13" alt="" style="border-width:0;width:268px;height:1317px;"></div>
-<div id="wb_Shape19" style="position:absolute;left:351px;top:990px;width:1015px;height:232px;z-index:20;">
-<img src="images/img0016.png" id="Shape19" alt="" style="border-width:0;width:1015px;height:232px;"></div>
-<div id="wb_Shape12" style="position:absolute;left:1037px;top:1341px;width:317px;height:288px;z-index:21;">
-<img src="images/img0155.png" id="Shape12" alt="" style="border-width:0;width:317px;height:288px;"></div>
-<div id="wb_Shape3" style="position:absolute;left:352px;top:1276px;width:667px;height:353px;z-index:22;">
-<img src="images/img0244.png" id="Shape3" alt="" style="border-width:0;width:667px;height:353px;"></div>
-<div id="wb_Shape4" style="position:absolute;left:355px;top:1285px;width:335px;height:325px;z-index:23;">
-<img src="images/img0251.png" id="Shape4" alt="" style="border-width:0;width:335px;height:325px;"></div>
-<div id="wb_Shape1" style="position:absolute;left:350px;top:620px;width:1014px;height:301px;z-index:24;">
-<img src="images/img0243.png" id="Shape1" alt="" style="border-width:0;width:1014px;height:301px;"></div>
-<div id="SlideShow2_frame" style="position:absolute;left:71px;top:193px;margin-left:-12px;margin-top:-12px;z-index:25;">
+<div id="wb_Shape3" style="position:absolute;left:352px;top:1179px;width:641px;height:288px;z-index:19;">
+<img src="images/img0244.png" id="Shape3" alt="" style="border-width:0;width:641px;height:288px;"></div>
+<div id="wb_Shape13" style="position:absolute;left:69px;top:620px;width:268px;height:579px;z-index:20;">
+<img src="images/img0256.png" id="Shape13" alt="" style="border-width:0;width:268px;height:579px;"></div>
+<div id="wb_Shape19" style="position:absolute;left:352px;top:934px;width:1014px;height:232px;z-index:21;">
+<img src="images/img0016.png" id="Shape19" alt="" style="border-width:0;width:1014px;height:232px;"></div>
+<div id="wb_Shape12" style="position:absolute;left:1007px;top:1179px;width:358px;height:289px;z-index:22;">
+<img src="images/img0155.png" id="Shape12" alt="" style="border-width:0;width:358px;height:289px;"></div>
+<div id="wb_Shape1" style="position:absolute;left:352px;top:620px;width:1012px;height:301px;z-index:23;">
+<img src="images/img0243.png" id="Shape1" alt="" style="border-width:0;width:1012px;height:301px;"></div>
+<div id="SlideShow2_frame" style="position:absolute;left:71px;top:193px;margin-left:-12px;margin-top:-12px;z-index:24;">
 <img style="border-width:0;left:0;top:0;" src="images/img0332.png" alt="">
 </div>
-<div id="SlideShow2" style="position:absolute;left:71px;top:193px;width:1293px;height:421px;border:1px #6AB644 solid;z-index:25;">
+<div id="SlideShow2" style="position:absolute;left:71px;top:193px;width:1293px;height:421px;border:1px #6AB644 solid;z-index:24;">
 <img class="image" style="width:1293px;height:421px;" src="images/EMS.jpg" alt="" title="">
 <img class="image" style="width:1293px;height:421px;display:none;" src="images/Products.jpg" alt="" title="">
 <img class="image" style="width:1293px;height:421px;display:none;" src="images/Services%20Slide2.jpg" alt="" title="">
@@ -1020,15 +974,7 @@ $("a[rel^='PhotoGallery1']").fancybox({});
 <div id="SlideShow2_back" style="position:absolute;left:4px;top:196px;width:30px;height:30px;z-index:999"><a style="cursor:pointer"><img alt="Back" style="border-style:none" src="images/carousel_back.png"></a></div>
 <div id="SlideShow2_next" style="position:absolute;left:1259px;top:196px;width:30px;height:30px;z-index:999"><a style="cursor:pointer"><img alt="Next" style="border-style:none" src="images/carousel_next.png"></a></div>
 </div>
-<div id="NavigationBar1" style="position:absolute;left:70px;top:621px;width:269px;height:316px;z-index:26;">
-<ul class="navbar">
-<li><a href="./AMI.html"><img alt="" src="images/img0247_over.gif"><span><img alt="" src="images/img0247.gif"></span></a></li>
-<li><a href="./Vending,_Billing_&_Tariff_Management.html"><img alt="" src="images/img0248_over.gif"><span><img alt="" src="images/img0248.gif"></span></a></li>
-<li><a href="./Display_Customer_Interface_Unit_.html"><img alt="" src="images/img0249_over.gif"><span><img alt="" src="images/img0249.gif"></span></a></li>
-<li><a href="./Water_Pulse_Units.html"><img alt="" src="images/img0250_over.gif"><span><img alt="" src="images/img0250.gif"></span></a></li>
-</ul>
-</div>
-<div id="wb_Text1" style="position:absolute;left:371px;top:726px;width:309px;height:137px;z-index:27;text-align:left;">
+<div id="wb_Text1" style="position:absolute;left:371px;top:726px;width:309px;height:137px;z-index:25;text-align:left;">
 <div style="line-height:20px;"><span style="color:#000000;font-family:Arial;font-size:13px;">EMS INVIROTEL Energy Management (Pty) Ltd is </span></div>
 <div style="line-height:20px;"><span style="color:#000000;font-family:Arial;font-size:13px;">an integrated smart electricity and water metering </span></div>
 <div style="line-height:20px;"><span style="color:#000000;font-family:Arial;font-size:13px;">and propriety software company. Invirotel provides </span></div>
@@ -1036,7 +982,7 @@ $("a[rel^='PhotoGallery1']").fancybox({});
 <div style="line-height:20px;"><span style="color:#000000;font-family:Arial;font-size:13px;">the Public, Private as well as the Mass Residencial </span></div>
 <div style="line-height:20px;"><span style="color:#000000;font-family:Arial;font-size:13px;">sectors.</span></div>
 </div>
-<div id="wb_Text2" style="position:absolute;left:710px;top:728px;width:322px;height:137px;z-index:28;text-align:left;">
+<div id="wb_Text2" style="position:absolute;left:710px;top:728px;width:322px;height:137px;z-index:26;text-align:left;">
 <div style="line-height:20px;"><span style="color:#000000;font-family:Arial;font-size:13px;">INVIROTEL product range focuses on smart solutions </span></div>
 <div style="line-height:20px;"><span style="color:#000000;font-family:Arial;font-size:13px;">for the electrical and electricity energy sector. The </span></div>
 <div style="line-height:20px;"><span style="color:#000000;font-family:Arial;font-size:13px;">service requires software, hardware and installation </span></div>
@@ -1044,212 +990,179 @@ $("a[rel^='PhotoGallery1']").fancybox({});
 <div style="line-height:20px;"><span style="color:#000000;font-family:Arial;font-size:13px;">software harnessing the data-gathering and control </span></div>
 <div style="line-height:20px;"><span style="color:#000000;font-family:Arial;font-size:13px;">abilities of the hardware devices.</span></div>
 </div>
-<div id="wb_Text3" style="position:absolute;left:1059px;top:731px;width:295px;height:96px;z-index:29;text-align:left;">
+<div id="wb_Text3" style="position:absolute;left:1059px;top:731px;width:295px;height:96px;z-index:27;text-align:left;">
 <div style="line-height:20px;"><span style="color:#000000;font-family:Arial;font-size:13px;">INVIROTEL technology is empowering remote and </span></div>
 <div style="line-height:20px;"><span style="color:#000000;font-family:Arial;font-size:13px;">impoverished rural communities by providing them </span></div>
 <div style="line-height:20px;"><span style="color:#000000;font-family:Arial;font-size:13px;">with modern, state-of-the-art technology and </span></div>
 <div style="line-height:20px;"><span style="color:#000000;font-family:Arial;font-size:13px;">communication networks.</span></div>
 </div>
-<div id="wb_Image4" style="position:absolute;left:704px;top:652px;width:64px;height:64px;z-index:30;">
+<div id="wb_Image4" style="position:absolute;left:704px;top:652px;width:64px;height:64px;z-index:28;">
 <img src="images/process.png" id="Image4" alt="" style="width:64px;height:64px;"></div>
-<div id="wb_Image10" style="position:absolute;left:1053px;top:653px;width:64px;height:64px;z-index:31;">
+<div id="wb_Image10" style="position:absolute;left:1053px;top:653px;width:64px;height:64px;z-index:29;">
 <img src="images/users.png" id="Image10" alt="" style="width:64px;height:64px;"></div>
-<div id="wb_Image11" style="position:absolute;left:362px;top:653px;width:64px;height:64px;z-index:32;">
+<div id="wb_Image11" style="position:absolute;left:362px;top:653px;width:64px;height:64px;z-index:30;">
 <img src="images/male_user.png" id="Image11" alt="" style="width:64px;height:64px;"></div>
-<div id="wb_Text14" style="position:absolute;left:425px;top:672px;width:192px;height:22px;text-align:center;z-index:33;">
+<div id="wb_Text14" style="position:absolute;left:425px;top:672px;width:192px;height:22px;text-align:center;z-index:31;">
 <span style="color:#70BF44;font-family:Arial;font-size:19px;letter-spacing:0px;"><strong>About Us</strong></span></div>
-<div id="wb_Text4" style="position:absolute;left:777px;top:672px;width:192px;height:22px;text-align:center;z-index:34;">
+<div id="wb_Text4" style="position:absolute;left:777px;top:672px;width:192px;height:22px;text-align:center;z-index:32;">
 <span style="color:#70BF44;font-family:Arial;font-size:19px;letter-spacing:0px;"><strong>Our Products </strong></span></div>
-<div id="wb_Text6" style="position:absolute;left:1134px;top:671px;width:229px;height:57px;text-align:center;z-index:35;">
+<div id="wb_Text6" style="position:absolute;left:1134px;top:671px;width:229px;height:57px;text-align:center;z-index:33;">
 <span style="color:#70BF44;font-family:Arial;font-size:17px;letter-spacing:0px;"><strong>Our Socio- Economic Development<br></strong></span></div>
-<div id="wb_TextMenu1" style="position:absolute;left:92px;top:1324px;width:233px;height:161px;z-index:36;">
+<div id="wb_TextMenu1" style="position:absolute;left:90px;top:989px;width:233px;height:161px;z-index:34;">
 <span><a href="http://www.reeep.org/events/8th-southern-african-energy-efficiency-convention-2013-saeec">SAEE Expo</a></span>
 <span><a href="http://www.africaelectricity.com/">Africa Electicity Expo</a></span>
 <span><a href="http://www.southafrica.com/events/conferences/gauteng/johannesburg/women-in-energy-africa-forum-2013-3338.html">Women in Energy Africa Forum 2013</a></span>
 <span><a href="">Bidvest Fun Walk</a></span>
 <span><a href="">Cebit Hanover 2013 Expo</a></span>
 </div>
-<div id="wb_Image22" style="position:absolute;left:368px;top:852px;width:130px;height:38px;z-index:37;">
+<div id="wb_Image22" style="position:absolute;left:368px;top:852px;width:130px;height:38px;z-index:35;">
 <a href="./About_Us.html"><img src="images/readm.png" id="Image22" alt="" style="width:130px;height:38px;"></a></div>
-<div id="wb_Image13" style="position:absolute;left:705px;top:852px;width:130px;height:38px;z-index:38;">
-<a href="./Services.html"><img src="images/readm.png" id="Image13" alt="" style="width:130px;height:38px;"></a></div>
-<div id="wb_Image14" style="position:absolute;left:1059px;top:852px;width:130px;height:38px;z-index:39;">
+<div id="wb_Image13" style="position:absolute;left:705px;top:852px;width:130px;height:38px;z-index:36;">
+<a href="./Products.html"><img src="images/readm.png" id="Image13" alt="" style="width:130px;height:38px;"></a></div>
+<div id="wb_Image14" style="position:absolute;left:1059px;top:852px;width:130px;height:38px;z-index:37;">
 <a href="./Socio-Economic_Development.html"><img src="images/readm.png" id="Image14" alt="" style="width:130px;height:38px;"></a></div>
-<div id="wb_Text9" style="position:absolute;left:706px;top:950px;width:252px;height:22px;text-align:center;z-index:40;">
-<span style="color:#70BF44;font-family:Arial;font-size:19px;letter-spacing:0px;"><strong>Our Services</strong></span></div>
-<hr id="Line1" style="margin:0;padding:0;position:absolute;left:353px;top:963px;width:333px;height:1px;z-index:41;">
-<hr id="Line2" style="margin:0;padding:0;position:absolute;left:998px;top:962px;width:363px;height:1px;z-index:42;">
-<hr id="Line3" style="margin:0;padding:0;position:absolute;left:350px;top:1249px;width:1012px;height:1px;z-index:43;">
-<div id="SlideShow1" style="position:absolute;left:360px;top:1321px;width:321px;height:217px;z-index:44;">
-<img class="image" style="width:321px;height:217px;" src="images/soft.PNG" alt="" title="">
-<img class="image" style="width:321px;height:217px;display:none;" src="images/ware.PNG" alt="" title="">
-<img class="image" style="width:321px;height:217px;display:none;" src="images/dash%20board.PNG" alt="" title="">
-</div>
-<div id="wb_Text15" style="position:absolute;left:700px;top:1381px;width:301px;height:192px;z-index:45;text-align:left;">
-<div style="line-height:22px;"><span style="color:#000000;font-family:Arial;font-size:15px;">INVIROTEL provides a wealth of tools for </span></div>
-<div style="line-height:22px;"><span style="color:#000000;font-family:Arial;font-size:15px;">analysis, reports, alerts and control to both </span></div>
-<div style="line-height:22px;"><span style="color:#000000;font-family:Arial;font-size:15px;">the Utility and the end-user Customer. Clients </span></div>
-<div style="line-height:22px;"><span style="color:#000000;font-family:Arial;font-size:15px;">can get real time data from a circuit level right </span></div>
-<div style="line-height:22px;"><span style="color:#000000;font-family:Arial;font-size:15px;">up to an entire region or country. Clients can </span></div>
-<div style="line-height:22px;"><span style="color:#000000;font-family:Arial;font-size:15px;">view their consumption and bills in real time </span></div>
-<div style="line-height:22px;"><span style="color:#000000;font-family:Arial;font-size:15px;">and at all times. Internet and all smart mobile </span></div>
-<div style="line-height:22px;"><span style="color:#000000;font-family:Arial;font-size:15px;">devices are supported.</span></div>
-</div>
-<div id="wb_Text21" style="position:absolute;left:1060px;top:1443px;width:272px;height:65px;text-align:center;z-index:46;">
-<span style="color:#F5FFFA;font-family:Arial;font-size:13px;">Subscribe to our Monthly NewsLetter to stay updated with our latest Products, Campaigns, News, Competitions &amp; Event</span><span style="color:#F5FFFA;font-family:'Century Gothic';font-size:13px;">s</span><span style="color:#000000;font-family:Arial;font-size:13px;"><br></span></div>
-<div id="wb_Form1" style="position:absolute;left:1043px;top:1395px;width:300px;height:231px;z-index:47;">
-<form name="Subsribe" method="post" action="" enctype="text/plain" id="Form1">
+<div id="wb_Text9" style="position:absolute;left:706px;top:946px;width:252px;height:22px;text-align:center;z-index:38;">
+<span style="color:#F0FFF0;font-family:Arial;font-size:19px;letter-spacing:0px;"><strong> Services</strong></span></div>
+<div id="wb_Form1" style="position:absolute;left:1018px;top:1237px;width:316px;height:224px;z-index:39;">
+<form name="Subsribe" method="post" action="<?php echo basename(__FILE__); ?>" enctype="multipart/form-data" id="Form1">
 <textarea name="TextArea1" id="TextArea1" style="position:absolute;left:60px;top:118px;width:222px;height:24px;z-index:0;" rows="0" cols="31"></textarea>
 <div id="wb_Text17" style="position:absolute;left:8px;top:121px;width:43px;height:16px;z-index:1;text-align:left;">
 <span style="color:#F5FFFA;font-family:Arial;font-size:13px;">Name</span><span style="color:#FFFFFF;font-family:Arial;font-size:13px;"> </span></div>
 <textarea name="TextArea2" id="TextArea2" style="position:absolute;left:61px;top:157px;width:222px;height:23px;z-index:2;" rows="0" cols="31"></textarea>
-<input type="submit" id="Button1" name="" value="Submit" style="position:absolute;left:178px;top:198px;width:96px;height:25px;z-index:3;">
+<input type="submit" id="Button1" name="" value="Submit" style="position:absolute;left:189px;top:192px;width:96px;height:25px;z-index:3;">
 <div id="wb_Text18" style="position:absolute;left:8px;top:157px;width:43px;height:16px;z-index:4;text-align:left;">
 <span style="color:#F5FFFA;font-family:Arial;font-size:13px;">Email</span></div>
 </form>
 </div>
-<div id="wb_Image26" style="position:absolute;left:696px;top:1293px;width:64px;height:64px;z-index:48;">
-<img src="images/computer.png" id="Image26" alt="" style="width:64px;height:64px;"></div>
-<div id="wb_Text10" style="position:absolute;left:771px;top:1311px;width:208px;height:22px;text-align:center;z-index:49;">
-<span style="color:#70BF44;font-family:Arial;font-size:19px;letter-spacing:0px;"><strong>Our Dashboard</strong></span></div>
-<div id="wb_PhotoGallery1" style="position:absolute;left:86px;top:1765px;width:241px;height:167px;z-index:50;">
+<div id="wb_PhotoGallery1" style="position:absolute;left:701px;top:1234px;width:283px;height:220px;z-index:40;">
 <table id="PhotoGallery1">
    <tr>
-      <td class="figure" style="width:76px;height:79px">
-      <a href="images/IMG_1441.JPG" rel="PhotoGallery1"><img alt="" title="" src="images/IMG_1441.JPG" style="width:76px;height:56px;"></a>
+      <td class="figure" style="width:90px;height:105px">
+      <a href="images/IMG_1441.JPG" rel="PhotoGallery1"><img alt="" title="" src="images/tn_IMG_1441.png" style="width:90px;height:76px;"></a>
       </td>
-      <td class="figure" style="width:76px;height:79px">
-      <a href="images/IMG_1451.JPG" rel="PhotoGallery1"><img alt="" title="" src="images/IMG_1451.JPG" style="width:76px;height:56px;"></a>
+      <td class="figure" style="width:90px;height:105px">
+      <a href="images/IMG_1451.JPG" rel="PhotoGallery1"><img alt="" title="" src="images/tn_IMG_1451.png" style="width:90px;height:76px;"></a>
       </td>
-      <td class="figure" style="width:76px;height:79px">
-      <a href="images/IMG_1495.JPG" rel="PhotoGallery1"><img alt="" title="" src="images/IMG_1495.JPG" style="width:76px;height:56px;"></a>
+      <td class="figure" style="width:90px;height:105px">
+      <a href="images/IMG_1495.JPG" rel="PhotoGallery1"><img alt="" title="" src="images/tn_IMG_1495.png" style="width:90px;height:76px;"></a>
       </td>
    </tr>
    <tr>
-      <td class="figure" style="width:76px;height:79px">
-      <a href="images/IMG_1497.JPG" rel="PhotoGallery1"><img alt="" title="" src="images/IMG_1497.JPG" style="width:76px;height:56px;"></a>
+      <td class="figure" style="width:90px;height:105px">
+      <a href="images/IMG_1497.JPG" rel="PhotoGallery1"><img alt="" title="" src="images/tn_IMG_1497.png" style="width:90px;height:76px;"></a>
       </td>
    </tr>
 </table>
 </div>
-<div id="wb_Image24" style="position:absolute;left:695px;top:1576px;width:154px;height:47px;z-index:51;">
-<a href="http://dashboard.invirohub.com"><img src="images/visitd.png" id="Image24" alt="" style="width:154px;height:47px;"></a></div>
-<div id="wb_Image34" style="position:absolute;left:479px;top:1771px;width:278px;height:102px;z-index:52;">
-<a href="http://www.voltex.co.za"><img src="images/voltex.png" id="Image34" alt="" style="width:278px;height:102px;"></a></div>
-<div id="wb_Image27" style="position:absolute;left:919px;top:1779px;width:257px;height:87px;z-index:53;">
-<a href="http://www.pdev.co.za"><img src="images/pdev_small%20%281%29.png" id="Image27" alt="" style="width:257px;height:87px;"></a></div>
-<div id="wb_Text16" style="position:absolute;left:751px;top:1686px;width:208px;height:22px;text-align:center;z-index:54;">
-<span style="color:#70BF44;font-family:Arial;font-size:19px;letter-spacing:0px;"><strong>Our Partners</strong></span></div>
-<div id="wb_Shape14" style="position:absolute;left:70px;top:963px;width:269px;height:38px;z-index:55;">
+<div id="wb_Shape14" style="position:absolute;left:68px;top:638px;width:269px;height:38px;z-index:41;">
 <img src="images/img0329.png" id="Shape14" alt="" style="border-width:0;width:269px;height:38px;"></div>
-<div id="wb_Text11" style="position:absolute;left:78px;top:974px;width:237px;height:18px;text-align:center;z-index:56;">
+<div id="wb_Text11" style="position:absolute;left:76px;top:647px;width:237px;height:18px;text-align:center;z-index:42;">
 <span style="color:#FFFFFF;font-family:Arial;font-size:16px;letter-spacing:0px;">Some Of Our Product Range</span></div>
-<div id="wb_Shape2" style="position:absolute;left:71px;top:1264px;width:268px;height:38px;z-index:57;">
+<div id="wb_Shape2" style="position:absolute;left:69px;top:932px;width:268px;height:38px;z-index:43;">
 <img src="images/img0330.png" id="Shape2" alt="" style="border-width:0;width:268px;height:38px;"></div>
-<div id="wb_Text12" style="position:absolute;left:130px;top:1275px;width:139px;height:18px;text-align:center;z-index:58;">
+<div id="wb_Text12" style="position:absolute;left:128px;top:939px;width:139px;height:18px;text-align:center;z-index:44;">
 <span style="color:#FFFFFF;font-family:Arial;font-size:16px;letter-spacing:0px;">Recent News</span></div>
-<div id="wb_Shape10" style="position:absolute;left:70px;top:1704px;width:269px;height:38px;z-index:59;">
-<img src="images/img0331.png" id="Shape10" alt="" style="border-width:0;width:269px;height:38px;"></div>
-<div id="wb_Text13" style="position:absolute;left:147px;top:1714px;width:105px;height:18px;text-align:center;z-index:60;">
-<span style="color:#FFFFFF;font-family:Arial;font-size:16px;letter-spacing:0px;">Gallery</span></div>
-<div id="wb_Shape11" style="position:absolute;left:70px;top:1518px;width:269px;height:38px;z-index:61;">
-<img src="images/img0333.png" id="Shape11" alt="" style="border-width:0;width:269px;height:38px;"></div>
-<div id="wb_Text20" style="position:absolute;left:80px;top:1648px;width:113px;height:17px;text-align:center;z-index:62;">
-<span style="color:#FFFFFF;font-family:Arial;font-size:15px;letter-spacing:0px;">Downloads</span></div>
-<hr id="Line4" style="margin:0;padding:0;position:absolute;left:350px;top:1698px;width:418px;height:1px;z-index:63;">
-<hr id="Line5" style="margin:0;padding:0;position:absolute;left:941px;top:1698px;width:416px;height:1px;z-index:64;">
-<hr id="Line6" style="margin:0;padding:0;position:absolute;left:347px;top:1937px;width:1012px;height:1px;z-index:65;">
-<div id="wb_Shape15" style="position:absolute;left:378px;top:1230px;width:639px;height:240px;filter:alpha(opacity=90);-moz-opacity:0.90;opacity:0.90;visibility:hidden;z-index:66;">
+<div id="wb_Text13" style="position:absolute;left:792px;top:1201px;width:105px;height:19px;text-align:center;z-index:45;">
+<span style="color:#FFFFFF;font-family:Arial;font-size:16px;letter-spacing:0px;"><strong>Gallery</strong></span></div>
+<div id="wb_Shape15" style="position:absolute;left:378px;top:1230px;width:639px;height:240px;filter:alpha(opacity=90);-moz-opacity:0.90;opacity:0.90;visibility:hidden;z-index:46;">
 <img src="images/img0405.png" id="Shape15" alt="" style="border-width:0;width:639px;height:240px;"></div>
-<div id="wb_Shape16" style="position:absolute;left:617px;top:1230px;width:639px;height:240px;filter:alpha(opacity=90);-moz-opacity:0.90;opacity:0.90;visibility:hidden;z-index:67;">
+<div id="wb_Shape16" style="position:absolute;left:617px;top:1230px;width:639px;height:240px;filter:alpha(opacity=90);-moz-opacity:0.90;opacity:0.90;visibility:hidden;z-index:47;">
 <img src="images/img0407.png" id="Shape16" alt="" style="border-width:0;width:639px;height:240px;"></div>
-<div id="wb_Shape17" style="position:absolute;left:734px;top:1229px;width:639px;height:240px;filter:alpha(opacity=90);-moz-opacity:0.90;opacity:0.90;visibility:hidden;z-index:68;">
+<div id="wb_Shape17" style="position:absolute;left:734px;top:1229px;width:639px;height:240px;filter:alpha(opacity=90);-moz-opacity:0.90;opacity:0.90;visibility:hidden;z-index:48;">
 <img src="images/img0408.png" id="Shape17" alt="" style="border-width:0;width:639px;height:240px;"></div>
-<div id="wb_Shape18" style="position:absolute;left:734px;top:1229px;width:639px;height:240px;filter:alpha(opacity=90);-moz-opacity:0.90;opacity:0.90;visibility:hidden;z-index:69;">
+<div id="wb_Shape18" style="position:absolute;left:734px;top:1229px;width:639px;height:240px;filter:alpha(opacity=90);-moz-opacity:0.90;opacity:0.90;visibility:hidden;z-index:49;">
 <img src="images/img0409.png" id="Shape18" alt="" style="border-width:0;width:639px;height:240px;"></div>
-<div id="wb_Text19" style="position:absolute;left:1041px;top:1400px;width:312px;height:44px;text-align:center;z-index:70;">
-<span style="color:#70BF44;font-family:Arial;font-size:19px;letter-spacing:3px;">To Our Monthly Newsletter</span><span style="color:#000000;font-family:Arial;font-size:19px;letter-spacing:3px;"><br></span></div>
-<div id="RollOver1" style="position:absolute;overflow:hidden;left:363px;top:1013px;width:144px;height:184px;z-index:71">
+<div id="wb_Text19" style="position:absolute;left:1114px;top:1218px;width:212px;height:44px;text-align:center;z-index:50;">
+<span style="color:#F0FFF0;font-family:Arial;font-size:19px;letter-spacing:3px;">Subcribe <br>To Our Newsletter</span></div>
+<div id="RollOver1" style="position:absolute;overflow:hidden;left:380px;top:977px;width:144px;height:184px;z-index:51">
 <a href="./AMI.html">
 <img class="hover" alt="" src="images/ami%20green.png" style="left:0px;top:0px;width:144px;height:184px;">
 <span><img alt="" src="images/ami%20BLUE.PNG" style="left:0px;top:0px;width:144px;height:184px"></span>
 </a>
 </div>
-<div id="RollOver2" style="position:absolute;overflow:hidden;left:539px;top:1104px;width:0px;height:0px;z-index:72">
+<div id="RollOver2" style="position:absolute;overflow:hidden;left:539px;top:1104px;width:0px;height:0px;z-index:52">
 <a href="">
 <img class="hover" alt="" src="" style="left:0px;top:0px;width:0px;height:0px;">
 <span><img alt="" src="" style="left:0px;top:0px;width:0px;height:0px"></span>
 </a>
 </div>
-<div id="RollOver3" style="position:absolute;overflow:hidden;left:556px;top:1013px;width:144px;height:184px;z-index:73">
+<div id="RollOver3" style="position:absolute;overflow:hidden;left:573px;top:977px;width:144px;height:184px;z-index:53">
 <a href="./Vending,_Billing_&_Tariff_Management.html">
 <img class="hover" alt="" src="images/Vending%20green.png" style="left:0px;top:0px;width:144px;height:184px;">
 <span><img alt="" src="images/Vending%20BLUE.png" style="left:0px;top:0px;width:144px;height:184px"></span>
 </a>
 </div>
-<div id="RollOver4" style="position:absolute;overflow:hidden;left:762px;top:1013px;width:144px;height:184px;z-index:74">
+<div id="RollOver4" style="position:absolute;overflow:hidden;left:779px;top:977px;width:144px;height:184px;z-index:54">
 <a href="./Profiling,_Report_&_Analysis.html">
 <img class="hover" alt="" src="images/Profiling%20green.png" style="left:0px;top:0px;width:144px;height:184px;">
 <span><img alt="" src="images/Profiling%20BLUE.png" style="left:0px;top:0px;width:144px;height:184px"></span>
 </a>
 </div>
-<div id="RollOver5" style="position:absolute;overflow:hidden;left:968px;top:1013px;width:144px;height:184px;z-index:75">
+<div id="RollOver5" style="position:absolute;overflow:hidden;left:985px;top:977px;width:144px;height:184px;z-index:55">
 <a href="./Field_Services.html">
 <img class="hover" alt="" src="images/Field%20servicesi%20green.png" style="left:0px;top:0px;width:144px;height:184px;">
 <span><img alt="" src="images/Field%20Services%20BLUE.png" style="left:0px;top:0px;width:144px;height:184px"></span>
 </a>
 </div>
-<div id="RollOver6" style="position:absolute;overflow:hidden;left:1182px;top:1013px;width:144px;height:184px;z-index:76">
+<div id="RollOver6" style="position:absolute;overflow:hidden;left:1198px;top:977px;width:144px;height:184px;z-index:56">
 <a href="./Consulting_Services.html">
 <img class="hover" alt="" src="images/Consulting%20Services%20green.png" style="left:0px;top:0px;width:144px;height:184px;">
 <span><img alt="" src="images/Consulting%20Services%20BLUE.png" style="left:0px;top:0px;width:144px;height:184px"></span>
 </a>
 </div>
-<div id="wb_Image15" style="position:absolute;left:1114px;top:1249px;width:161px;height:154px;z-index:77;">
-<img src="images/img0001.png" id="Image15" alt="" style="width:161px;height:154px;"></div>
-<div id="wb_Shape20" style="position:absolute;left:70px;top:1016px;width:269px;height:184px;z-index:78;">
+<div id="wb_Shape20" style="position:absolute;left:68px;top:686px;width:269px;height:184px;z-index:57;">
 <img src="images/img0060.png" id="Shape20" alt="" style="border-width:0;width:269px;height:184px;"></div>
-<div id="wb_Line7" style="position:absolute;left:88px;top:1344px;width:207px;height:0px;z-index:79;">
+<div id="wb_Line7" style="position:absolute;left:86px;top:1009px;width:207px;height:0px;z-index:58;">
 <img src="images/img0415.png" id="Line7" alt=""></div>
-<div id="wb_Line8" style="position:absolute;left:88px;top:1376px;width:207px;height:0px;z-index:80;">
+<div id="wb_Line8" style="position:absolute;left:86px;top:1041px;width:207px;height:0px;z-index:59;">
 <img src="images/img0416.png" id="Line8" alt=""></div>
-<div id="wb_Line9" style="position:absolute;left:88px;top:1408px;width:207px;height:0px;z-index:81;">
+<div id="wb_Line9" style="position:absolute;left:86px;top:1073px;width:207px;height:0px;z-index:60;">
 <img src="images/img0417.png" id="Line9" alt=""></div>
-<div id="wb_Line10" style="position:absolute;left:88px;top:1440px;width:207px;height:0px;z-index:82;">
+<div id="wb_Line10" style="position:absolute;left:86px;top:1105px;width:207px;height:0px;z-index:61;">
 <img src="images/img0418.png" id="Line10" alt=""></div>
-<div id="wb_Line11" style="position:absolute;left:88px;top:1471px;width:207px;height:0px;z-index:83;">
+<div id="wb_Line11" style="position:absolute;left:86px;top:1136px;width:207px;height:0px;z-index:62;">
 <img src="images/img0423.png" id="Line11" alt=""></div>
-<div id="SlideShow3_frame" style="position:absolute;left:116px;top:1024px;margin-left:-1px;margin-top:-1px;z-index:84;">
+<div id="SlideShow3_frame" style="position:absolute;left:114px;top:695px;margin-left:-1px;margin-top:-1px;z-index:63;">
 <img style="border-width:0;left:0;top:0;" src="images/img0246.png" alt="">
 </div>
-<div id="SlideShow3" style="position:absolute;left:116px;top:1024px;width:168px;height:169px;z-index:84;">
+<div id="SlideShow3" style="position:absolute;left:114px;top:695px;width:168px;height:169px;z-index:63;">
 <img class="image" style="width:168px;height:169px;" src="images/slide1.jpg" alt="" title="">
 <img class="image" style="width:168px;height:169px;display:none;" src="images/slide2.jpg" alt="" title="">
 <img class="image" style="width:168px;height:169px;display:none;" src="images/slide3.jpg" alt="" title="">
 <img class="image" style="width:168px;height:169px;display:none;" src="images/4.jpg" alt="" title="">
 <img class="image" style="width:168px;height:169px;display:none;" src="images/slide5.jpg" alt="" title="">
 </div>
-<button id="AdvancedButton1" type="button" name="" value="" style="position:absolute;left:152px;top:1221px;width:102px;height:23px;z-index:85;">
+<button id="AdvancedButton1" type="button" name="" value="" style="position:absolute;left:152px;top:884px;width:102px;height:23px;z-index:64;">
 <div style="text-align:center"><span style="color:#000000;font-family:Arial;font-size:13px">View Products</span></div>
 </button>
-<div id="RollOver7" style="position:absolute;overflow:hidden;left:87px;top:1593px;width:83px;height:54px;z-index:86">
-<a href="">
+<div id="RollOver7" style="position:absolute;overflow:hidden;left:379px;top:1248px;width:83px;height:54px;z-index:65">
+<a href="./Downloads.html">
 <img class="hover" alt="" src="images/Download2.png" style="left:0px;top:0px;width:83px;height:54px;">
 <span><img alt="" src="images/Download.png" style="left:0px;top:0px;width:83px;height:54px"></span>
 </a>
 </div>
-<div id="RollOver8" style="position:absolute;overflow:hidden;left:229px;top:1576px;width:69px;height:78px;z-index:87">
+<div id="RollOver8" style="position:absolute;overflow:hidden;left:542px;top:1241px;width:69px;height:78px;z-index:66">
 <a href="">
 <img class="hover" alt="" src="images/tools2.png" style="left:0px;top:0px;width:69px;height:78px;">
 <span><img alt="" src="images/tools.png" style="left:0px;top:0px;width:69px;height:78px"></span>
 </a>
 </div>
-<div id="wb_Text22" style="position:absolute;left:207px;top:1647px;width:145px;height:17px;z-index:88;text-align:left;">
+<div id="wb_Text20" style="position:absolute;left:371px;top:1308px;width:113px;height:17px;text-align:center;z-index:67;">
+<span style="color:#FFFFFF;font-family:Arial;font-size:15px;letter-spacing:0px;">Downloads</span></div>
+<div id="wb_Text22" style="position:absolute;left:518px;top:1313px;width:145px;height:17px;z-index:68;text-align:left;">
 <span style="color:#FFFFFF;font-family:Arial;font-size:15px;letter-spacing:0px;">Tools + Resources</span></div>
-<div id="wb_Text23" style="position:absolute;left:131px;top:1528px;width:139px;height:18px;text-align:center;z-index:89;">
-<span style="color:#FFFFFF;font-family:Arial;font-size:16px;letter-spacing:0px;">Useful</span></div>
+<div id="wb_Text23" style="position:absolute;left:434px;top:1201px;width:139px;height:19px;text-align:center;z-index:69;">
+<span style="color:#FFFFFF;font-family:Arial;font-size:16px;letter-spacing:0px;"><strong>Useful</strong></span></div>
+<div id="wb_Line1" style="position:absolute;left:365px;top:1336px;width:290px;height:0px;z-index:70;">
+<img src="images/img0248.png" id="Line1" alt=""></div>
+<div id="wb_Line3" style="position:absolute;left:678px;top:1210px;width:0px;height:206px;z-index:71;">
+<img src="images/img0249.png" id="Line3" alt=""></div>
+<div id="wb_Image15" style="position:absolute;left:1001px;top:1170px;width:118px;height:115px;z-index:72;">
+<img src="images/img0001.png" id="Image15" alt="" style="width:118px;height:115px;"></div>
+<div id="wb_Text21" style="position:absolute;left:1016px;top:1293px;width:329px;height:65px;text-align:center;z-index:73;">
+<span style="color:#393636;font-family:Arial;font-size:13px;">Subscribe to our Monthly NewsLetter to stay updated with our latest Products, Campaigns, News, Competitions &amp; Event</span><span style="color:#393636;font-family:'Century Gothic';font-size:13px;">s</span><span style="color:#000000;font-family:Arial;font-size:13px;"><br></span></div>
 </div>
-<div id="Header" style="position:absolute;text-align:left;left:0%;top:0px;width:100%;height:120px;z-index:90;" title="">
+<div id="Header" style="position:absolute;text-align:left;left:0%;top:0px;width:100%;height:120px;z-index:74;" title="">
 <div id="wb_MenuBar1" style="position:absolute;left:634px;top:59px;width:682px;height:30px;z-index:1005;">
 <div id="MenuBar1">
 <ul style="display:none;">
@@ -1347,9 +1260,7 @@ cmDrawFromText('MenuBar1', 'hbr', cmMenuBar1, 'ThemeMenuBar1');
 <div id="wb_Image5" style="position:absolute;left:1375px;top:51px;width:40px;height:41px;z-index:8;">
 <a href="http://www.twitter.com/Invirohub"><img src="images/img0004.png" id="Image5" alt="" style="width:40px;height:41px;"></a></div>
 </div>
-<div id="Layer1" style="position:absolute;text-align:left;left:0%;top:123px;width:100%;height:10px;z-index:91;" title="">
-</div>
-<div id="Footer" style="position:absolute;text-align:left;left:0%;top:1979px;width:100%;height:206px;z-index:92;" title="">
+<div id="Footer" style="position:absolute;text-align:left;left:0%;top:1494px;width:100%;height:206px;z-index:75;" title="">
 <div id="wb_Text7" style="position:absolute;left:494px;top:52px;width:493px;height:32px;z-index:9;text-align:left;">
 <span style="color:#FFFFFF;font-family:Arial;font-size:13px;"><br>Powerful and intelligent tools and services for clear, insightful analysis</span></div>
 <div id="wb_Image18" style="position:absolute;left:1142px;top:84px;width:44px;height:58px;z-index:10;">
