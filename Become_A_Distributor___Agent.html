@@ -1,4 +1,90 @@
+<?php
+   function ValidateEmail($email)
+   {
+      $pattern = '/^([0-9a-z]([-.\w]*[0-9a-z])*@(([0-9a-z])+([-\w]*[0-9a-z])*\.)+[a-z]{2,6})$/i';
+      return preg_match($pattern, $email);
+   }
 
+   if ($_SERVER['REQUEST_METHOD'] == 'POST')
+   {
+      $mailto = 'info@invirohub.com';
+      $mailfrom = isset($_POST['email']) ? $_POST['email'] : $mailto;
+      $subject = 'Website form';
+      $message = 'Values submitted from web site form:';
+      $success_url = '';
+      $error_url = '';
+      $error = '';
+      $eol = "\n";
+      $max_filesize = isset($_POST['filesize']) ? $_POST['filesize'] * 1024 : 1024000;
+      $boundary = md5(uniqid(time()));
+
+      $header  = 'From: '.$mailfrom.$eol;
+      $header .= 'Reply-To: '.$mailfrom.$eol;
+      $header .= 'MIME-Version: 1.0'.$eol;
+      $header .= 'Content-Type: multipart/mixed; boundary="'.$boundary.'"'.$eol;
+      $header .= 'X-Mailer: PHP v'.phpversion().$eol;
+      if (!ValidateEmail($mailfrom))
+      {
+         $error .= "The specified email address is invalid!\n<br>";
+      }
+
+      if (!empty($error))
+      {
+         $errorcode = file_get_contents($error_url);
+         $replace = "##error##";
+         $errorcode = str_replace($replace, $error, $errorcode);
+         echo $errorcode;
+         exit;
+      }
+
+      $internalfields = array ("submit", "reset", "send", "captcha_code");
+      $message .= $eol;
+      $message .= "IP Address : ";
+      $message .= $_SERVER['REMOTE_ADDR'];
+      $message .= $eol;
+      foreach ($_POST as $key => $value)
+      {
+         if (!in_array(strtolower($key), $internalfields))
+         {
+            if (!is_array($value))
+            {
+               $message .= ucwords(str_replace("_", " ", $key)) . " : " . $value . $eol;
+            }
+            else
+            {
+               $message .= ucwords(str_replace("_", " ", $key)) . " : " . implode(",", $value) . $eol;
+            }
+         }
+      }
+
+      $body  = 'This is a multi-part message in MIME format.'.$eol.$eol;
+      $body .= '--'.$boundary.$eol;
+      $body .= 'Content-Type: text/plain; charset=ISO-8859-1'.$eol;
+      $body .= 'Content-Transfer-Encoding: 8bit'.$eol;
+      $body .= $eol.stripslashes($message).$eol;
+      if (!empty($_FILES))
+      {
+          foreach ($_FILES as $key => $value)
+          {
+             if ($_FILES[$key]['error'] == 0 && $_FILES[$key]['size'] <= $max_filesize)
+             {
+                $body .= '--'.$boundary.$eol;
+                $body .= 'Content-Type: '.$_FILES[$key]['type'].'; name='.$_FILES[$key]['name'].$eol;
+                $body .= 'Content-Transfer-Encoding: base64'.$eol;
+                $body .= 'Content-Disposition: attachment; filename='.$_FILES[$key]['name'].$eol;
+                $body .= $eol.chunk_split(base64_encode(file_get_contents($_FILES[$key]['tmp_name']))).$eol;
+             }
+         }
+      }
+      $body .= '--'.$boundary.'--'.$eol;
+      if ($mailto != '')
+      {
+         mail($mailto, $subject, $body, $header);
+      }
+      header('Location: '.$success_url);
+      exit;
+   }
+?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -792,7 +878,7 @@ div.ThemeMenuBar1MenuSplit
 <input type="radio" id="RadioButton7" name="q[2]" value="Phone" style="position:absolute;left:148px;top:696px;z-index:38;">
 <textarea name="Address" id="TextArea2" style="position:absolute;left:18px;top:792px;width:477px;height:95px;z-index:39;" rows="4" cols="73"></textarea>
 <div id="wb_Text24" style="position:absolute;left:18px;top:754px;width:533px;height:17px;z-index:40;text-align:left;">
-<span style="color:#000000;font-family:Arial;font-size:15px;">Any additional information to support yor enquiry</span></div>
+<span style="color:#000000;font-family:Arial;font-size:15px;">Any additional information to support your enquiry</span></div>
 </form>
 </div>
 <div id="wb_Text13" style="position:absolute;left:374px;top:771px;width:638px;height:18px;z-index:52;text-align:left;">
@@ -846,7 +932,7 @@ cmDrawFromText('MenuBar2', 'vbr', cmMenuBar2, 'ThemeMenuBar2');
 <div id="wb_Text12" style="position:absolute;left:61px;top:143px;width:174px;height:17px;text-align:center;z-index:59;">
 <span style="color:#FFFFFF;font-family:Arial;font-size:15px;letter-spacing:0px;">Tools &amp; Resources</span></div>
 <div id="wb_Image54" style="position:absolute;left:4px;top:608px;width:303px;height:125px;z-index:60;">
-<a href="./Contact.html"><img src="images/img0783.png" id="Image54" alt="" style="width:303px;height:125px;"></a></div>
+<a href="./Contact.php"><img src="images/img0783.png" id="Image54" alt="" style="width:303px;height:125px;"></a></div>
 </div>
 <div id="Layer1" style="position:absolute;text-align:center;left:0%;top:1392px;width:100%;height:206px;z-index:61;" title="">
 <div id="Layer1_Container" style="width:1422px;position:relative;margin-left:auto;margin-right:auto;text-align:left;">
@@ -897,7 +983,7 @@ cmDrawFromText('MenuBar2', 'vbr', cmMenuBar2, 'ThemeMenuBar2');
 </li>
 <li><span></span><a href="./Tools_&_Resources.html" target="_self">Tools&nbsp;+&nbsp;Resources</a>
 </li>
-<li><span></span><a href="./Contact.html" target="_self">Contact&nbsp;Us</a>
+<li><span></span><a href="./Contact.php" target="_self">Contact&nbsp;Us</a>
 </li>
 </ul>
 </div>
