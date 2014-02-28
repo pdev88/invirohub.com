@@ -895,8 +895,40 @@ div.ThemeMenuBar1MenuSplit
 {
    border: 0px #000000 solid;
 }
+#RollOver6 a
+{
+   display: block;
+   position: relative;
+}
+#RollOver6 a img
+{
+   position: absolute;
+   z-index: 1;
+   border-width: 0px;
+}
+#RollOver6 span
+{
+   display: block;
+   height: 56px;
+   width: 56px;
+   position: absolute;
+   z-index: 2;
+}
 </style>
 <script type="text/javascript" src="swfobject.js"></script>
+<script type="text/javascript" src="jquery-1.9.1.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function()
+{
+   $("#RollOver6 a").hover(function()
+   {
+      $(this).children("span").stop().fadeTo(500, 0);
+   }, function()
+   {
+      $(this).children("span").stop().fadeTo(500, 1);
+   });
+});
+</script>
 </head>
 <body>
 <div id="container">
@@ -944,7 +976,7 @@ div.ThemeMenuBar1MenuSplit
 <div id="wb_Line4" style="position:absolute;left:52px;top:964px;width:207px;height:0px;z-index:33;">
 <img src="images/img0293.png" id="Line4" alt=""></div>
 <div id="wb_Image23" style="position:absolute;left:0px;top:999px;width:303px;height:125px;z-index:34;">
-<a href="./Contact.php"><img src="images/img0479.png" id="Image23" alt="" style="width:303px;height:125px;"></a></div>
+<a href="./Contact.html"><img src="images/img0479.png" id="Image23" alt="" style="width:303px;height:125px;"></a></div>
 <div id="wb_Text9" style="position:absolute;left:374px;top:301px;width:432px;height:66px;z-index:35;text-align:left;">
 <div style="line-height:22px;"><span style="color:#000000;font-family:Arial;font-size:15px;">Mediating between client and utility providers.</span></div>
 <div style="line-height:22px;"><span style="color:#000000;font-family:Arial;font-size:15px;">Communicating any changes of procedures and regulations.</span></div>
@@ -973,7 +1005,7 @@ div.ThemeMenuBar1MenuSplit
 <span style="color:#73BF45;font-family:Arial;font-size:17px;"><strong>Energy Efficiency Management</strong></span></div>
 <div id="wb_Text17" style="position:absolute;left:352px;top:557px;width:490px;height:18px;z-index:41;text-align:left;">
 <span style="color:#1CC2E5;font-family:Arial;font-size:15px;"><strong>Through our partner Voltex, we have the following available:</strong></span></div>
-<div id="wb_Text18" style="position:absolute;left:352px;top:146px;width:421px;height:24px;z-index:42;text-align:left;">
+<div id="wb_Text18" style="position:absolute;left:399px;top:146px;width:421px;height:24px;z-index:42;text-align:left;">
 <span style="color:#73BF45;font-family:Arial;font-size:21px;letter-spacing:3px;">Consulting Services</span></div>
 <div id="wb_Shape13" style="position:absolute;left:0px;top:132px;width:307px;height:723px;z-index:43;">
 <img src="images/img0388.png" id="Shape13" alt="" style="border-width:0;width:307px;height:723px;"></div>
@@ -1100,9 +1132,15 @@ cmDrawFromText('MenuBar3', 'vbr', cmMenuBar3, 'ThemeMenuBar3');
 </script>
 </div>
 <div id="wb_Image21" style="position:absolute;left:0px;top:871px;width:303px;height:125px;z-index:56;">
-<a href="./Contact.php"><img src="images/img0396.png" id="Image21" alt="" style="width:303px;height:125px;"></a></div>
+<a href="./Contact.html"><img src="images/img0396.png" id="Image21" alt="" style="width:303px;height:125px;"></a></div>
+<div id="RollOver6" style="position:absolute;overflow:hidden;left:340px;top:118px;width:56px;height:56px;z-index:57">
+<a href="./Consulting_Services.html">
+<img class="hover" alt="" src="images/Consulting%20green1.png" style="left:0px;top:0px;width:56px;height:56px;">
+<span><img alt="" src="images/Consulting%20Servicesg.png" style="left:0px;top:0px;width:56px;height:56px"></span>
+</a>
 </div>
-<div id="Footer" style="position:absolute;text-align:center;left:0%;top:1173px;width:100%;height:206px;z-index:57;" title="">
+</div>
+<div id="Footer" style="position:absolute;text-align:center;left:0%;top:1173px;width:100%;height:206px;z-index:58;" title="">
 <div id="Footer_Container" style="width:1422px;position:relative;margin-left:auto;margin-right:auto;text-align:left;">
 <div id="wb_Text4" style="position:absolute;left:485px;top:32px;width:493px;height:32px;z-index:0;text-align:left;">
 <span style="color:#FFFFFF;font-family:Arial;font-size:13px;"><br>Powerful and intelligent tools and services for clear, insightful analysis</span></div>
@@ -1136,7 +1174,7 @@ cmDrawFromText('MenuBar3', 'vbr', cmMenuBar3, 'ThemeMenuBar3');
 <img src="images/img0485.png" id="Image24" alt="" style="width:250px;height:49px;"></div>
 </div>
 </div>
-<div id="Header" style="position:absolute;text-align:center;left:0%;top:0px;width:100%;height:105px;z-index:58;" title="">
+<div id="Header" style="position:absolute;text-align:center;left:0%;top:0px;width:100%;height:105px;z-index:59;" title="">
 <div id="Header_Container" style="width:1422px;position:relative;margin-left:auto;margin-right:auto;text-align:left;">
 <div id="wb_MenuBar1" style="position:absolute;left:480px;top:38px;width:682px;height:30px;z-index:1010;">
 <div id="MenuBar1">
@@ -1151,7 +1189,7 @@ cmDrawFromText('MenuBar3', 'vbr', cmMenuBar3, 'ThemeMenuBar3');
 </li>
 <li><span></span><a href="./Tools_&_Resources.html" target="_self">Tools&nbsp;+&nbsp;Resources</a>
 </li>
-<li><span></span><a href="./Contact.php" target="_self">Contact&nbsp;Us</a>
+<li><span></span><a href="./Contact.html" target="_self">Contact&nbsp;Us</a>
 </li>
 </ul>
 </div>

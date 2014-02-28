@@ -1199,7 +1199,7 @@ cmDrawFromText('MenuBar2', 'vbr', cmMenuBar2, 'ThemeMenuBar2');
 </li>
 </ul>
 </li>
-<li><span></span><a href="./Contact.php" target="_self">Contact&nbsp;Us</a>
+<li><span></span><a href="./Contact.html" target="_self">Contact&nbsp;Us</a>
 </li>
 </ul>
 </div>
